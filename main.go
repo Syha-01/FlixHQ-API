@@ -23,6 +23,7 @@ func main() {
 	http.HandleFunc("/servers", h.GetServers)
 	http.HandleFunc("/link", h.GetLink)
 	http.HandleFunc("/stream", h.GetStream)
+	http.HandleFunc("/home", h.GetHome)
 
 	// Get port from environment (Cloud Run requirement)
 	port := os.Getenv("PORT")
@@ -41,6 +42,7 @@ func main() {
 	fmt.Println("  GET /servers?episodeId=&provider= - Get servers")
 	fmt.Println("  GET /link?serverId=&provider= - Get embed link")
 	fmt.Println("  GET /stream?serverId=&provider= - Get decrypted stream URL")
+	fmt.Println("  GET /home?provider= - Get home page content (trending, latest)")
 
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }

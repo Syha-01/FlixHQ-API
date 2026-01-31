@@ -81,3 +81,19 @@ type StreamResult struct {
 	Subtitles []string `json:"subtitles,omitempty"`
 	Referer   string   `json:"referer,omitempty"`
 }
+
+// HomeItem represents a single item on the home page
+type HomeItem struct {
+	Title  string    `json:"title"`
+	URL    string    `json:"url"`
+	Type   MediaType `json:"type"`
+	Poster string    `json:"poster"`
+}
+
+// HomeResult contains all sections from the home page
+type HomeResult struct {
+	Trending     []HomeItem `json:"trending"`
+	LatestMovies []HomeItem `json:"latest_movies"`
+	LatestShows  []HomeItem `json:"latest_tv_shows"`
+	ComingSoon   []HomeItem `json:"coming_soon"`
+}

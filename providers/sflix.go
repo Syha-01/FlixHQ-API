@@ -226,3 +226,8 @@ func (s *Sflix) GetLink(serverID string) (string, error) {
 
 	return res.Link, nil
 }
+
+// GetHome returns an error as this provider doesn't support home page scraping
+func (s *Sflix) GetHome() (*core.HomeResult, error) {
+	return nil, fmt.Errorf("home page not supported for sflix provider")
+}

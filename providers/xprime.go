@@ -236,3 +236,8 @@ func (x *XPrime) GetLink(serverID string) (string, error) {
 
 	return embedLink, nil
 }
+
+// GetHome returns an error as this provider doesn't support home page scraping
+func (x *XPrime) GetHome() (*core.HomeResult, error) {
+	return nil, fmt.Errorf("home page not supported for xprime provider")
+}

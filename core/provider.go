@@ -8,4 +8,5 @@ type Provider interface {
 	GetEpisodes(id string, isSeason bool) ([]Episode, error)
 	GetServers(episodeID string) ([]Server, error)
 	GetLink(serverID string) (string, error)
+	GetHome() (*HomeResult, error)
 }

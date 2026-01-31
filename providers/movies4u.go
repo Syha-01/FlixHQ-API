@@ -257,3 +257,8 @@ func (m *Movies4u) resolveHubCloudDownload(url string) (string, error) {
 
 	return m.resolveFinalLink(downloadLink)
 }
+
+// GetHome returns an error as this provider doesn't support home page scraping
+func (m *Movies4u) GetHome() (*core.HomeResult, error) {
+	return nil, fmt.Errorf("home page not supported for movies4u provider")
+}

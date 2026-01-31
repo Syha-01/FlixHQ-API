@@ -230,3 +230,87 @@ func (f *FlixHQ) GetLink(serverID string) (string, error) {
 	}
 	return res.Link, nil
 }
+
+// GetHome fetches the home page content with trending, latest movies, latest TV shows, and coming soon
+func (f *FlixHQ) GetHome() (*core.HomeResult, error) {
+	req, _ := f.newRequest("GET", FLIXHQ_BASE_URL+"/home")
+	resp, err := f.Client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	doc, err := goquery.NewDocumentFromReader(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	result := &core.HomeResult{}
+
+	// Helper function to parse items from a section
+	parseSection := func(section *goquery.Selection) []core.HomeItem {
+		var items []core.HomeItem
+		section.Find("div.flw-item").Each(func(i int, s *goquery.Selection) {
+			// Try multiple selectors for title (h2 or h3)
+			title := s.Find(".film-name a").AttrOr("title", "")
+			if title == "" {
+				title = strings.TrimSpace(s.Find(".film-name a").Text())
+			}
+			if title == "" {
+				// Fallback to img title attribute
+				title = s.Find("img.film-poster-img").AttrOr("title", "")
+			}
+
+			// Get href from film-poster link
+			href := s.Find(".film-poster a").AttrOr("href", "")
+			if href == "" {
+				href = s.Find("a.film-poster-ahref").AttrOr("href", "")
+			}
+
+			// Get poster image
+			poster := s.Find("img.film-poster-img").AttrOr("data-src", "")
+			if poster == "" {
+				poster = s.Find("img.film-poster-img").AttrOr("src", "")
+			}
+
+			// Determine media type from URL pattern
+			mediaType := core.Movie
+			if strings.Contains(href, "/tv/") {
+				mediaType = core.Series
+			} else {
+				typeStr := strings.TrimSpace(s.Find("span.fdi-type").Text())
+				if strings.EqualFold(typeStr, "TV") || strings.EqualFold(typeStr, "Series") {
+					mediaType = core.Series
+				}
+			}
+
+			if href != "" && title != "" {
+				items = append(items, core.HomeItem{
+					Title:  title,
+					URL:    FLIXHQ_BASE_URL + href,
+					Type:   mediaType,
+					Poster: poster,
+				})
+			}
+		})
+		return items
+	}
+
+	// Find all sections by their headers
+	doc.Find("section.block_area").Each(func(i int, s *goquery.Selection) {
+		header := strings.ToLower(strings.TrimSpace(s.Find(".cat-heading").Text()))
+
+		switch {
+		case strings.Contains(header, "trending"):
+			result.Trending = parseSection(s)
+		case strings.Contains(header, "latest movie"):
+			result.LatestMovies = parseSection(s)
+		case strings.Contains(header, "latest tv"):
+			result.LatestShows = parseSection(s)
+		case strings.Contains(header, "coming soon"):
+			result.ComingSoon = parseSection(s)
+		}
+	})
+
+	return result, nil
+}

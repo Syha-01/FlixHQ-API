@@ -246,3 +246,8 @@ func (b *Brocoflix) GetLink(serverID string) (string, error) {
 
 	return embedLink, nil
 }
+
+// GetHome returns an error as this provider doesn't support home page scraping
+func (b *Brocoflix) GetHome() (*core.HomeResult, error) {
+	return nil, fmt.Errorf("home page not supported for brocoflix provider")
+}

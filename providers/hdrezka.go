@@ -329,3 +329,8 @@ func (h *HDRezka) Decode(data string) string {
 
 	return valid.String()
 }
+
+// GetHome returns an error as this provider doesn't support home page scraping
+func (h *HDRezka) GetHome() (*core.HomeResult, error) {
+	return nil, fmt.Errorf("home page not supported for hdrezka provider")
+}

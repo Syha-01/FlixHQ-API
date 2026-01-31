@@ -150,3 +150,8 @@ func (y *YouTube) GetServers(episodeID string) ([]core.Server, error) {
 func (y *YouTube) GetLink(serverID string) (string, error) {
 	return YOUTUBE_BASE_URL + "/watch?v=" + serverID, nil
 }
+
+// GetHome returns an error as this provider doesn't support home page scraping
+func (y *YouTube) GetHome() (*core.HomeResult, error) {
+	return nil, fmt.Errorf("home page not supported for youtube provider")
+}

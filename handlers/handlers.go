@@ -265,3 +265,22 @@ func (h *Handler) GetStream(w http.ResponseWriter, r *http.Request) {
 		Referer:   referer,
 	})
 }
+
+// Get home page content (trending, latest, coming soon)
+func (h *Handler) GetHome(w http.ResponseWriter, r *http.Request) {
+	providerName := r.URL.Query().Get("provider")
+
+	provider := h.getProvider(providerName)
+	if provider == nil {
+		writeError(w, http.StatusBadRequest, "invalid provider")
+		return
+	}
+
+	result, err := provider.GetHome()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, result)
+}
