@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie API Documentation</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: #f4f4f4;
+        }
+
+        .container {
+            background: #fff;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 0.5rem;
+        }
+
+        h2 {
+            color: #34495e;
+            margin-top: 2rem;
+        }
+
+        code {
+            background: #f8f9fa;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+            font-size: 0.9em;
+            color: #e83e8c;
+        }
+
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+
+        pre code {
+            background: transparent;
+            color: inherit;
+            padding: 0;
+        }
+
+        .endpoint {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            border: 1px solid #eee;
+            border-radius: 6px;
+        }
+
+        .method {
+            font-weight: bold;
+            color: #27ae60;
+            margin-right: 0.5rem;
+        }
+
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Movie API</h1>
+        <p>A REST API for scraping movie and TV show data, deployable to Google Cloud Run.</p>
+
+        <h2>Cloud Run Deployment</h2>
+        <p>This API is containerized and ready for Google Cloud Run.</p>
+
+        <pre><code># 1. Build and push image
+gcloud builds submit --tag gcr.io/YOUR_PROJECT/movie-api
+
+# 2. Deploy to Cloud Run
+gcloud run deploy movie-api \
+  --image gcr.io/YOUR_PROJECT/movie-api \
+  --platform managed \
+  --allow-unauthenticated</code></pre>
+
+        <h2>API Endpoints</h2>
+
+        <div class="endpoint">
+            <div><span class="method">GET</span> <code>/health</code></div>
+            <p>Health check endpoint. Returns <code>{"status": "ok"}</code>.</p>
+        </div>
+
+        <div class="endpoint">
+            <div><span class="method">GET</span> <code>/providers</code></div>
+            <p>List available providers (flixhq, sflix, etc).</p>
+        </div>
+
+        <div class="endpoint">
+            <div><span class="method">GET</span> <code>/search?q={query}&provider={name}</code></div>
+            <p>Search for movies and TV shows.</p>
+        </div>
+
+        <div class="endpoint">
+            <div><span class="method">GET</span> <code>/stream?serverId={id}&provider={name}</code></div>
+            <p>Get decrypted stream URL (m3u8) for playback.</p>
+        </div>
+
+        <p>For full documentation check the <a href="https://github.com/DemonKingSwarn/luffy">original repository</a> or
+            the project README.</p>
+    </div>
+</body>
+
+</html>
