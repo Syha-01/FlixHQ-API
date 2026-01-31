@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/demonkingswarn/movie-api/core"
@@ -233,31 +234,30 @@ func (f *FlixHQ) GetLink(serverID string) (string, error) {
 
 // GetHome fetches the home page content with trending, latest movies, latest TV shows, and coming soon
 func (f *FlixHQ) GetHome() (*core.HomeResult, error) {
-	req, _ := f.newRequest("GET", FLIXHQ_BASE_URL+"/home")
-	resp, err := f.Client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	doc, err := goquery.NewDocumentFromReader(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
+	var wg sync.WaitGroup
 	result := &core.HomeResult{}
+	var resultErr error
+	var errMutex sync.Mutex
 
-	// Helper function to parse items from a section
-	parseSection := func(section *goquery.Selection) []core.HomeItem {
+	// Helper function for safe error assignment
+	setError := func(err error) {
+		errMutex.Lock()
+		if resultErr == nil {
+			resultErr = err
+		}
+		errMutex.Unlock()
+	}
+
+	// Helper function to parse items from a selection
+	parseItems := func(container *goquery.Selection) []core.HomeItem {
 		var items []core.HomeItem
-		section.Find("div.flw-item").Each(func(i int, s *goquery.Selection) {
+		container.Find("div.flw-item").Each(func(i int, s *goquery.Selection) {
 			// Try multiple selectors for title (h2 or h3)
 			title := s.Find(".film-name a").AttrOr("title", "")
 			if title == "" {
 				title = strings.TrimSpace(s.Find(".film-name a").Text())
 			}
 			if title == "" {
-				// Fallback to img title attribute
 				title = s.Find("img.film-poster-img").AttrOr("title", "")
 			}
 
@@ -273,7 +273,7 @@ func (f *FlixHQ) GetHome() (*core.HomeResult, error) {
 				poster = s.Find("img.film-poster-img").AttrOr("src", "")
 			}
 
-			// Determine media type from URL pattern
+			// Determine media type
 			mediaType := core.Movie
 			if strings.Contains(href, "/tv/") {
 				mediaType = core.Series
@@ -296,21 +296,64 @@ func (f *FlixHQ) GetHome() (*core.HomeResult, error) {
 		return items
 	}
 
-	// Find all sections by their headers
-	doc.Find("section.block_area").Each(func(i int, s *goquery.Selection) {
-		header := strings.ToLower(strings.TrimSpace(s.Find(".cat-heading").Text()))
+	wg.Add(2)
 
-		switch {
-		case strings.Contains(header, "trending"):
-			result.Trending = parseSection(s)
-		case strings.Contains(header, "latest movie"):
-			result.LatestMovies = parseSection(s)
-		case strings.Contains(header, "latest tv"):
-			result.LatestShows = parseSection(s)
-		case strings.Contains(header, "coming soon"):
-			result.ComingSoon = parseSection(s)
+	// Fetch Home Page
+	go func() {
+		defer wg.Done()
+		req, _ := f.newRequest("GET", FLIXHQ_BASE_URL+"/home")
+		resp, err := f.Client.Do(req)
+		if err != nil {
+			setError(err)
+			return
 		}
-	})
+		defer resp.Body.Close()
+
+		doc, err := goquery.NewDocumentFromReader(resp.Body)
+		if err != nil {
+			setError(err)
+			return
+		}
+
+		doc.Find("section.block_area").Each(func(i int, s *goquery.Selection) {
+			header := strings.ToLower(strings.TrimSpace(s.Find(".cat-heading").Text()))
+			switch {
+			case strings.Contains(header, "trending"):
+				result.Trending = parseItems(s)
+			case strings.Contains(header, "latest movie"):
+				result.LatestMovies = parseItems(s)
+			case strings.Contains(header, "latest tv"):
+				result.LatestShows = parseItems(s)
+			case strings.Contains(header, "coming soon"):
+				result.ComingSoon = parseItems(s)
+			}
+		})
+	}()
+
+	// Fetch Anime (Animation Genre)
+	go func() {
+		defer wg.Done()
+		req, _ := f.newRequest("GET", FLIXHQ_BASE_URL+"/genre/animation")
+		resp, err := f.Client.Do(req)
+		if err != nil {
+			// Don't fail the whole request if anime fails, just log/ignore
+			return
+		}
+		defer resp.Body.Close()
+
+		doc, err := goquery.NewDocumentFromReader(resp.Body)
+		if err != nil {
+			return
+		}
+
+		result.Anime = parseItems(doc.Find(".film_list-wrap"))
+	}()
+
+	wg.Wait()
+
+	if resultErr != nil {
+		return nil, resultErr
+	}
 
 	return result, nil
 }

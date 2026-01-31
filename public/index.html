@@ -100,24 +100,66 @@ gcloud run deploy movie-api \
 
         <h2>API Endpoints</h2>
 
-        <div class="endpoint">
-            <div><span class="method">GET</span> <code>/health</code></div>
-            <p>Health check endpoint. Returns <code>{"status": "ok"}</code>.</p>
-        </div>
+        <h2>API Endpoints</h2>
 
         <div class="endpoint">
-            <div><span class="method">GET</span> <code>/providers</code></div>
-            <p>List available providers (flixhq, sflix, etc).</p>
+            <div><span class="method">GET</span> <code>/home?provider={name}</code></div>
+            <p>Get home page content including Trending, Latest Movies/TV, Latest Anime, and Coming Soon.</p>
+            <pre><code>{
+  "trending": [{ "title": "...", "url": "...", "type": "movie", "poster": "..." }],
+  "latest_movies": [...],
+  "latest_tv_shows": [...],
+  "anime": [...],
+  "coming_soon": [...]
+}</code></pre>
         </div>
 
         <div class="endpoint">
             <div><span class="method">GET</span> <code>/search?q={query}&provider={name}</code></div>
             <p>Search for movies and TV shows.</p>
+            <pre><code>[
+  { "title": "Avatar", "url": "...", "type": "movie", "poster": "..." }
+]</code></pre>
+        </div>
+
+        <div class="endpoint">
+            <div><span class="method">GET</span> <code>/mediaId?url={url}&provider={name}</code></div>
+            <p>Extract the unique Media ID from a provider URL.</p>
+            <pre><code>{ "media_id": "123456" }</code></pre>
+        </div>
+
+        <div class="endpoint">
+            <div><span class="method">GET</span> <code>/seasons?mediaId={id}&provider={name}</code></div>
+            <p>Get seasons for a TV show. (Returns empty for movies)</p>
+            <pre><code>[{ "id": "...", "name": "Season 1" }]</code></pre>
+        </div>
+
+        <div class="endpoint">
+            <div><span class="method">GET</span> <code>/episodes?id={id}&isSeason={bool}&provider={name}</code></div>
+            <p>Get episodes for a specific season (TV) or movie.</p>
+            <p><strong>Note for FlixHQ Movies:</strong> When <code>isSeason=false</code>, this endpoint returns the list
+                of available <em>Servers</em> (e.g., UpCloud, Vidcloud) directly as "episodes". You should use these IDs
+                directly with the <code>/link</code> endpoint.</p>
+            <pre><code>[{ "id": "...", "name": "Episode 1" (or "UpCloud" for movies) }]</code></pre>
+        </div>
+
+        <div class="endpoint">
+            <div><span class="method">GET</span> <code>/servers?episodeId={id}&provider={name}</code></div>
+            <p>Get available servers for a TV show episode.</p>
+            <p><strong>Note:</strong> For FlixHQ movies, skip this step and use the IDs from <code>/episodes</code>
+                directly.</p>
+            <pre><code>[{ "id": "...", "name": "VidCloud" }]</code></pre>
+        </div>
+
+        <div class="endpoint">
+            <div><span class="method">GET</span> <code>/link?serverId={id}&provider={name}</code></div>
+            <p>Get the embed link for a specific server.</p>
+            <pre><code>{ "link": "https://rabstream.net/embed..." }</code></pre>
         </div>
 
         <div class="endpoint">
             <div><span class="method">GET</span> <code>/stream?serverId={id}&provider={name}</code></div>
-            <p>Get decrypted stream URL (m3u8) for playback.</p>
+            <p>Get decrypted stream URL (m3u8) for playback (if supported).</p>
         </div>
 
         <p>For full documentation check the <a href="https://github.com/DemonKingSwarn/luffy">original repository</a> or

@@ -96,4 +96,5 @@ type HomeResult struct {
 	LatestMovies []HomeItem `json:"latest_movies"`
 	LatestShows  []HomeItem `json:"latest_tv_shows"`
 	ComingSoon   []HomeItem `json:"coming_soon"`
+	Anime        []HomeItem `json:"anime"`
 }
